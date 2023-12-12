@@ -1,4 +1,8 @@
+import 'dart:io';
+import 'package:flutter/services.dart';
+import 'package:logger/logger.dart';
 import 'package:flutter/material.dart';
+import 'package:device_info_plus/device_info_plus.dart';
 import 'package:network_tools_flutter/network_tools_flutter.dart';
 
 class NetDevices extends StatefulWidget {
@@ -12,17 +16,27 @@ class NetDevices extends StatefulWidget {
   // case the title) provided by the parent (in this case the App widget) and
   // used by the build method of the State. Fields in a Widget subclass are
   // always marked "final".
-
   final String title;
 
   @override
   State<NetDevices> createState() => _NetDevicesState();
 }
 
+class LanHost {
+  String address;
+  String deviceName;
+  ActiveHost host;
+
+  LanHost(
+      {required this.address, required this.deviceName, required this.host});
+}
+
 class _NetDevicesState extends State<NetDevices> {
   bool loading = true;
   String? networkName = '';
-  Set<ActiveHost> devices = {};
+  String? myDeviceIp;
+  Map<String, LanHost> deviceMap = {};
+  Logger log = Logger();
 
   @override
   void initState() {
@@ -30,36 +44,94 @@ class _NetDevicesState extends State<NetDevices> {
     NetInterface.localInterface().then((val) {
       final NetInterface? netInt = val;
       if (netInt == null) {
-        print('no network interface');
+        log.e('no network interface found');
         return;
       }
-      HostScannerFlutter.getAllPingableDevices(netInt.networkId).listen((host) {
+
+      myDeviceIp = netInt.ipAddress;
+      HostScannerFlutter.getAllPingableDevices(netInt.networkId)
+          .listen((ActiveHost host) async {
+        LanHost hostInfo = LanHost(
+          address: host.address,
+          deviceName: await host.deviceName,
+          host: host,
+        );
+        if (hostInfo.address == myDeviceIp) {
+          return;
+        }
         setState(() {
-          devices.add(host);
+          deviceMap[hostInfo.address] = hostInfo;
+          loading = false;
         });
       }).onError((e) {
-        print('Error $e');
+        log.e('Error $e');
       });
     });
+  }
 
-    MdnsScanner.searchMdnsDevices().then((devices) async {
-      for (final ActiveHost activeHost in devices) {
-        final MdnsInfo? mdnsInfo = await activeHost.mdnsInfo;
-        print('''
-            Address: ${activeHost.address}
-            Port: ${mdnsInfo!.mdnsPort}
-            ServiceType: ${mdnsInfo.mdnsServiceType}
-            MdnsName: ${mdnsInfo.getOnlyTheStartOfMdnsName()}
-          ''');
-      }
+  Future<void> setupTcpSocketListener(String deviceName) async {
+    final sock = await ServerSocket.bind(InternetAddress.anyIPv4, 54321);
+    log.i('Datagram socket ready to receive on $deviceName\n'
+        '${sock.address.address}:${sock.port}');
+    sock.listen((client) {
+      client.listen((data) async {
+        String message = String.fromCharCodes(data).trim();
+        log.i(
+            '[${client.remoteAddress.address}:${client.remotePort}] $message');
+        Clipboard.setData(ClipboardData(text: message)).then((_) {
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+              content: Text(
+                  // ignore: prefer_interpolation_to_compose_strings
+                  'Clipboard update received from ' +
+                      (deviceMap[client.remoteAddress.address]?.deviceName ??
+                          client.remoteAddress.address))));
+        });
+      });
     });
+  }
+
+  Future<String> getDeviceName() async {
+    DeviceInfoPlugin deviceInfo = DeviceInfoPlugin();
+    String deviceName = 'Unnamed Device';
+
+    switch (Platform.operatingSystem) {
+      case 'android':
+        {
+          AndroidDeviceInfo androidInfo = await deviceInfo.androidInfo;
+          deviceName = androidInfo.model;
+        }
+        break;
+      case 'ios':
+        {
+          IosDeviceInfo iosInfo = await deviceInfo.iosInfo;
+          deviceName = iosInfo.name;
+        }
+        break;
+      case 'linux':
+        {
+          LinuxDeviceInfo linuxInfo = await deviceInfo.linuxInfo;
+          deviceName = linuxInfo.name;
+        }
+        break;
+      case 'macos':
+        {
+          MacOsDeviceInfo macInfo = await deviceInfo.macOsInfo;
+          deviceName = macInfo.computerName;
+        }
+        break;
+      case 'windows':
+        {
+          WindowsDeviceInfo windowsInfo = await deviceInfo.windowsInfo;
+          deviceName = windowsInfo.computerName;
+        }
+        break;
+    }
+
+    return deviceName;
   }
 
   @override
   Widget build(BuildContext context) {
-    if (loading) {
-      // return const CircularProgressIndicator();
-    }
     return Scaffold(
       appBar: AppBar(
         // TRY THIS: Try changing the color here to a specific color (to
@@ -92,13 +164,21 @@ class _NetDevicesState extends State<NetDevices> {
             const Text(
               'Devices on current network:',
             ),
-            ...devices.map((d) => Text(d.address)),
+            ...(loading
+                ? [const CircularProgressIndicator()]
+                : deviceMap.entries.map((entry) {
+                    LanHost device = entry.value;
+                    return Text('${device.deviceName} (${device.address})');
+                  }))
           ],
         ),
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () => print('PRESSED BUTTON!'),
-        tooltip: 'Increment',
+        onPressed: () async {
+          String deviceName = await getDeviceName();
+          await setupTcpSocketListener(deviceName);
+        },
+        tooltip: 'Listen for clipboard events',
         child: const Icon(Icons.add),
       ), // This trailing comma makes auto-formatting nicer for build methods.
     );
