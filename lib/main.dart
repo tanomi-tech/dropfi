@@ -7,7 +7,7 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   // It's necessary to pass correct path to be able to use this library.
   final appDocDirectory = await getApplicationDocumentsDirectory();
-  await configureNetworkTools(appDocDirectory.path, enableDebugging: true);
+  await configureNetworkTools(appDocDirectory.path, enableDebugging: false);
   runApp(const DropFi());
 }
 

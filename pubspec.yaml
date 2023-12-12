@@ -38,6 +38,9 @@ dependencies:
   network_info_plus: ^4.1.0
   network_tools_flutter: ^1.0.4
   path_provider: ^2.1.1
+  flutter_webrtc: ^0.9.47
+  device_info_plus: ^9.1.1
+  logger: ^2.0.2+1
 
 dev_dependencies:
   flutter_test:
