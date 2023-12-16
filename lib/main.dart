@@ -1,13 +1,16 @@
-import 'package:path_provider/path_provider.dart';
-import 'package:flutter/material.dart';
-import 'package:network_tools_flutter/network_tools_flutter.dart';
-import 'net_devices.dart';
+// import 'package:path_provider/path_provider.dart';
+// import 'package:flutter/material.dart';
+import 'package:share_handler/share_handler.dart';
+import 'package:flutter/cupertino.dart';
+import 'package:google_fonts/google_fonts.dart';
+// import 'package:network_tools_flutter/network_tools_flutter.dart';
+// import 'net_devices.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   // It's necessary to pass correct path to be able to use this library.
-  final appDocDirectory = await getApplicationDocumentsDirectory();
-  await configureNetworkTools(appDocDirectory.path, enableDebugging: false);
+  // final appDocDirectory = await getApplicationDocumentsDirectory();
+  // await configureNetworkTools(appDocDirectory.path, enableDebugging: true);
   runApp(const DropFi());
 }
 
@@ -17,9 +20,9 @@ class DropFi extends StatelessWidget {
   // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
+    return const CupertinoApp(
       title: 'DropFi',
-      theme: ThemeData(
+      theme: CupertinoThemeData(
         // This is the theme of your application.
         //
         // TRY THIS: Try running your application with "flutter run". You'll see
@@ -35,12 +38,10 @@ class DropFi extends StatelessWidget {
         //
         // This works for code too, not just values: Most code changes can be
         // tested with just a hot reload.
-        colorScheme: ColorScheme.fromSeed(
-            seedColor: const Color.fromARGB(255, 13, 80, 0)),
-        useMaterial3: true,
+        brightness: Brightness.dark
       ),
-      home: const NetDevices(title: 'Network Devices'),
-      // home: const MyHomePage(title: 'DropFi'),
+      // home: const NetDevices(title: 'Network Devices'),
+      home: MyHomePage(title: 'DropFi'),
     );
   }
 }
@@ -65,6 +66,13 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
   int _counter = 0;
+  SharedMedia? media;
+
+  @override
+  void initState() {
+    super.initState();
+    initPlatformState();
+  }
 
   void _incrementCounter() {
     setState(() {
@@ -77,25 +85,43 @@ class _MyHomePageState extends State<MyHomePage> {
     });
   }
 
+   // Platform messages are asynchronous, so we initialize in an async method.
+  Future<void> initPlatformState() async {
+    final handler = ShareHandlerPlatform.instance;
+    media = await handler.getInitialSharedMedia();
+
+    handler.sharedMediaStream.listen((SharedMedia media) {
+      if (!mounted) return;
+      setState(() {
+        this.media = media;
+      });
+    });
+    if (!mounted) return;
+
+    setState(() {
+      // _platformVersion = platformVersion;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
+    SizedBox spacer = const SizedBox(height: 20);
     // This method is rerun every time setState is called, for instance as done
     // by the _incrementCounter method above.
     //
     // The Flutter framework has been optimized to make rerunning build methods
     // fast, so that you can just rebuild anything that needs updating rather
     // than having to individually change instances of widgets.
-    return Scaffold(
-      appBar: AppBar(
-        // TRY THIS: Try changing the color here to a specific color (to
-        // Colors.amber, perhaps?) and trigger a hot reload to see the AppBar
-        // change color while the other colors stay the same.
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        // Here we take the value from the MyHomePage object that was created by
-        // the App.build method, and use it to set our appbar title.
-        title: Text(widget.title),
+    return CupertinoPageScaffold(
+      navigationBar: CupertinoNavigationBar(
+        backgroundColor: Color.fromARGB(255, 90, 11, 129),
+        middle: Text(widget.title, style: GoogleFonts.montserratAlternates(
+          textStyle: CupertinoTheme.of(context).textTheme.navTitleTextStyle,
+          fontWeight: FontWeight.w800,
+          fontSize: 23
+        )),
       ),
-      body: Center(
+      child: Center(
         // Center is a layout widget. It takes a single child and positions it
         // in the middle of the parent.
         child: Column(
@@ -115,20 +141,16 @@ class _MyHomePageState extends State<MyHomePage> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
             const Text(
-              'You have pushed the button this many times:',
+              'Instructions',
+              style: TextStyle(decoration: TextDecoration.underline)
             ),
-            Text(
-              '$_counter',
-              style: Theme.of(context).textTheme.headlineMedium,
-            ),
+            spacer,
+            const Text('Open Share > Select DropFi'),
+            spacer,
+            Text(media?.content != null ? 'Copied: ${media?.content}' : ''),
           ],
         ),
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
-        tooltip: 'Increment',
-        child: const Icon(Icons.add),
-      ), // This trailing comma makes auto-formatting nicer for build methods.
     );
   }
 }
