@@ -1,5 +1,6 @@
 // import 'package:path_provider/path_provider.dart';
 // import 'package:flutter/material.dart';
+import 'dart:io';
 import 'package:share_handler/share_handler.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -87,20 +88,22 @@ class _MyHomePageState extends State<MyHomePage> {
 
    // Platform messages are asynchronous, so we initialize in an async method.
   Future<void> initPlatformState() async {
-    final handler = ShareHandlerPlatform.instance;
-    media = await handler.getInitialSharedMedia();
+    if (Platform.isIOS || Platform.isAndroid) {
+      final handler = ShareHandlerPlatform.instance;
+      media = await handler.getInitialSharedMedia();
 
-    handler.sharedMediaStream.listen((SharedMedia media) {
-      if (!mounted) return;
-      setState(() {
-        this.media = media;
+      handler.sharedMediaStream.listen((SharedMedia media) {
+        if (!mounted) return;
+        setState(() {
+          this.media = media;
+        });
       });
-    });
-    if (!mounted) return;
+      if (!mounted) return;
+    }
 
-    setState(() {
-      // _platformVersion = platformVersion;
-    });
+      setState(() {
+        // _platformVersion = platformVersion;
+      });
   }
 
   @override
