@@ -1,5 +1,8 @@
 // import 'package:path_provider/path_provider.dart';
 // import 'package:flutter/material.dart';
+import 'dart:convert';
+import 'dart:io';
+
 import 'package:share_handler/share_handler.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -85,6 +88,12 @@ class _MyHomePageState extends State<MyHomePage> {
     });
   }
 
+  send(String content) async {
+    final sock = await Socket.connect(InternetAddress.anyIPv4, 54321);
+    sock.add(utf8.encode(content));
+    sock.close();
+  }
+
    // Platform messages are asynchronous, so we initialize in an async method.
   Future<void> initPlatformState() async {
     final handler = ShareHandlerPlatform.instance;
@@ -148,6 +157,7 @@ class _MyHomePageState extends State<MyHomePage> {
             const Text('Open Share > Select DropFi'),
             spacer,
             Text(media?.content != null ? 'Copied: ${media?.content}' : ''),
+            CupertinoButton(child: const Text('Send to device'), onPressed: () => send(media?.content != null ? '${media?.content}\n' : '\n'))
           ],
         ),
       ),
