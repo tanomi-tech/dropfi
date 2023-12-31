@@ -41,7 +41,7 @@ class _NetDevicesState extends State<NetDevices> {
   void initState() {
     super.initState();
 
-    // NetInterface.localInterface()
+    networkService.startBroadcast();
     networkService.getIPAddress().then((String myDeviceIP) {
       networkService.startDiscovery((disc) => (event) {
             // `eventStream` is not null as the discovery instance is "ready" !
@@ -51,11 +51,18 @@ class _NetDevicesState extends State<NetDevices> {
               event.service!.resolve(disc.serviceResolver);
             } else if (event.type ==
                 BonsoirDiscoveryEventType.discoveryServiceResolved) {
-              log.i(
-                  'Service resolved: ${event.service?.toJson(prefix: '')['host']}');
+              dynamic serviceInfo = event.service?.toJson(prefix: '');
+              log.i('Service resolved: ${serviceInfo['host']}');
+
+              if (serviceInfo['attributes']?['ip'] == myDeviceIP) {
+                return;
+              }
+
               networkService
                   .addServiceToTransferGroup(event.service!)
                   .then((_) => setState(() {
+                        log.i(
+                            'Added service to transfer group @ ${serviceInfo['host']}');
                         loading = false;
                       }));
             } else if (event.type ==
