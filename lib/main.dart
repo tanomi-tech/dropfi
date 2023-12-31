@@ -1,11 +1,9 @@
-// import 'package:bonsoir/bonsoir.dart';
-// import 'package:flutter/material.dart';
 import 'dart:convert';
 import 'dart:io';
+import 'package:dropfi/services/log_service.dart';
 import 'package:dropfi/services/network_service.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:logger/logger.dart';
 import 'package:network_tools_flutter/network_tools_flutter.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_handler/share_handler.dart';
@@ -69,8 +67,7 @@ class MyHomePage extends StatefulWidget {
   State<MyHomePage> createState() => _MyHomePageState();
 }
 
-class _MyHomePageState extends State<MyHomePage> {
-  Logger log = Logger();
+class _MyHomePageState extends State<MyHomePage> with LogService {
   SharedMedia? media;
 
   @override

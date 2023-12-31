@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'dart:io';
 import 'package:bonsoir/bonsoir.dart';
-import 'package:dropfi/services/device_service.dart';
 import 'package:dropfi/services/network_service.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -22,12 +21,13 @@ class LanHost {
   String address;
   String deviceName;
   ActiveHost host;
+  bool runningDropFiService = false;
 
   LanHost(
       {required this.address, required this.deviceName, required this.host});
 }
 
-class _NetDevicesState extends State<NetDevices> with DeviceService {
+class _NetDevicesState extends State<NetDevices> {
   bool loading = true;
   String? networkName = '';
   String? myDeviceIp;
@@ -40,59 +40,56 @@ class _NetDevicesState extends State<NetDevices> with DeviceService {
   @override
   void initState() {
     super.initState();
+
     // NetInterface.localInterface()
-    networkService
-        .getIPAddress()
-        .then((String myDeviceIP) {
-      // final NetInterface? netInt = val;
-      // if (netInt == null || netInt == prevNetInterface) {
-      //   log.e('no new network interface found');
-      //   return;
-      // }
+    networkService.getIPAddress().then((String myDeviceIP) {
+      networkService.startDiscovery((disc) => (event) {
+            // `eventStream` is not null as the discovery instance is "ready" !
+            if (event.type == BonsoirDiscoveryEventType.discoveryServiceFound) {
+              log.i(
+                  'Service found: ${event.service?.toJson(prefix: '')['name']}');
+              event.service!.resolve(disc.serviceResolver);
+            } else if (event.type ==
+                BonsoirDiscoveryEventType.discoveryServiceResolved) {
+              log.i(
+                  'Service resolved: ${event.service?.toJson(prefix: '')['host']}');
+              networkService
+                  .addServiceToTransferGroup(event.service!)
+                  .then((_) => setState(() {
+                        loading = false;
+                      }));
+            } else if (event.type ==
+                BonsoirDiscoveryEventType.discoveryServiceLost) {
+              log.i('Service lost:');
+              log.i(event.service?.toJson(prefix: ''));
+            }
+          });
 
-      // prevNetInterface = netInt;
+      //   List<String> subnetRangePieces = myDeviceIP.split('.');
+      //   subnetRangePieces.removeLast();
+      //   String subnetRange = subnetRangePieces.join('.');
 
-      // myDeviceIp = netInt.ipAddress;
+      //   HostScannerFlutter.getAllPingableDevices(subnetRange)
+      //       .listen((ActiveHost host) async {
+      //     LanHost hostInfo = LanHost(
+      //       address: host.address,
+      //       deviceName: await host.deviceName,
+      //       host: host,
+      //     );
+      //     if (hostInfo.address == myDeviceIP) {
+      //       return;
+      //     }
 
-      List<String> subnetRangePieces = myDeviceIP.split('.');
-      subnetRangePieces.removeLast();
-      String subnetRange = subnetRangePieces.join('.');
-
-      HostScannerFlutter.getAllPingableDevices(subnetRange)
-          .listen((ActiveHost host) async {
-        LanHost hostInfo = LanHost(
-          address: host.address,
-          deviceName: await host.deviceName,
-          host: host,
-        );
-        if (hostInfo.address == myDeviceIP) {
-          return;
-        }
-
-        setState(() {
-          deviceMap[hostInfo.address] = hostInfo;
-          loading = false;
-        });
-      }).onError((e) {
-        log.e('Error $e');
-      });
+      //     setState(() {
+      //       deviceMap[hostInfo.address] = hostInfo;
+      //       loading = false;
+      //     });
+      //   }).onError((e) {
+      //     log.e('Error $e');
+      //   });
     }).catchError((err) {
       log.e('Error $err');
     });
-
-    networkService.startDiscovery((disc) => (event) {
-          // `eventStream` is not null as the discovery instance is "ready" !
-          if (event.type == BonsoirDiscoveryEventType.discoveryServiceFound) {
-            log.i('Service found : ${event.service?.toJson()}');
-            event.service!.resolve(disc.serviceResolver);
-          } else if (event.type ==
-              BonsoirDiscoveryEventType.discoveryServiceResolved) {
-            log.i('Service resolved : ${event.service?.toJson()}');
-          } else if (event.type ==
-              BonsoirDiscoveryEventType.discoveryServiceLost) {
-            log.i('Service lost : ${event.service?.toJson()}');
-          }
-        });
   }
 
   Future<void> setupTcpSocketListener(String deviceName) async {
@@ -129,35 +126,41 @@ class _NetDevicesState extends State<NetDevices> with DeviceService {
                 fontSize: 23)),
       ),
       child: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            const Text(
-              'Devices on current network:',
-            ),
-            ...(loading
-                ? [const CircularProgressIndicator()]
-                : deviceMap.entries.map((entry) {
-                    LanHost device = entry.value;
-                    return Text('${device.deviceName} (${device.address})');
-                  }))
-          ],
+          child: ListView(padding: const EdgeInsets.all(20), children: [
+        const Center(
+          child: Text(
+            'Nearby DropFi-enabled Devices (Wi-Fi)',
+            style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+          ),
         ),
-      ),
-      // floatingActionButton: FloatingActionButton(
-      //   onPressed: () async {
-      //     String deviceName = await getDeviceName();
-      //     await setupTcpSocketListener(deviceName);
-      //   },
-      //   tooltip: 'Listen for clipboard events',
-      //   child: const Icon(Icons.add),
-      // ), // This trailing comma makes auto-formatting nicer for build methods.
+        ...(loading
+            ? [
+                const SizedBox(height: 20),
+                const Center(child: CircularProgressIndicator())
+              ]
+            : networkService.transferGroup.entries.map((entry) {
+                Map<String, dynamic> value = entry.value;
+                return Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                          '${value['attributes']?['nickname'] ?? value['host']?.split('.local')?.join('') ?? 'Generic Device'} [${value['address']}]'),
+                      CupertinoButton(
+                        child: const Text('Send'),
+                        onPressed: () => Clipboard.getData('text/plain')
+                            .then((data) => networkService.sendTo(
+                                value['host'], value['port'], data?.text ?? ''))
+                            .catchError((err) => log.e(err)),
+                      )
+                    ]);
+              })),
+      ])),
     );
   }
 
   @override
   void dispose() {
     super.dispose();
-    networkService.disposeDiscoveryInstance();
+    networkService.dispose();
   }
 }

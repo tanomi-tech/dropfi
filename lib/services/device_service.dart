@@ -1,8 +1,8 @@
 import 'dart:io';
 import 'package:device_info_plus/device_info_plus.dart';
 
-mixin DeviceService {
-  Future<String> getDeviceName() async {
+class UtilsService {
+  static Future<String> getDeviceName() async {
     DeviceInfoPlugin deviceInfo = DeviceInfoPlugin();
     String deviceName = 'Unnamed Device';
 
