@@ -40,6 +40,9 @@ class NetworkService with LogService {
   BonsoirBroadcast? broadcastInstance;
 
   Future<BonsoirBroadcast> startBroadcast() async {
+    if (broadcastInstance != null) {
+      await broadcastInstance!.stop();
+    }
     String ip = await getIPAddress();
     String nickname = "My Device";
     broadcastInstance = BonsoirBroadcast(
