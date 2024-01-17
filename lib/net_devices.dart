@@ -5,13 +5,13 @@ import 'package:dropfi/services/network_service.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:logger/logger.dart';
 import 'package:network_tools_flutter/network_tools_flutter.dart';
 
 class NetDevices extends StatefulWidget {
-  const NetDevices({super.key, required this.title});
+  const NetDevices({super.key, required this.title, required this.shareHandlerData});
   final String title;
+  final String shareHandlerData;
 
   @override
   State<NetDevices> createState() => _NetDevicesState();
@@ -122,46 +122,43 @@ class _NetDevicesState extends State<NetDevices> {
 
   @override
   Widget build(BuildContext context) {
-    return CupertinoPageScaffold(
-      navigationBar: CupertinoNavigationBar(
-        backgroundColor: const Color.fromARGB(255, 90, 11, 129),
-        middle: Text(widget.title,
-            style: GoogleFonts.montserratAlternates(
-                textStyle:
-                    CupertinoTheme.of(context).textTheme.navTitleTextStyle,
-                fontWeight: FontWeight.w800,
-                fontSize: 23)),
+   return CupertinoListSection.insetGrouped(
+      header: Text(
+        widget.title,
+        style: const TextStyle(
+          fontSize: 16,
+          fontWeight: FontWeight.w300
+        )
       ),
-      child: Center(
-          child: ListView(padding: const EdgeInsets.all(20), children: [
-        const Center(
-          child: Text(
-            'Nearby DropFi-enabled Devices (Wi-Fi)',
-            style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
-          ),
+      footer: Text(
+        'Found ${networkService.transferGroup.entries.length} device${networkService.transferGroup.entries.length > 1 ? 's' : ''} on your local network',
+        style: const TextStyle(
+          fontSize: 12
         ),
-        ...(loading
-            ? [
-                const SizedBox(height: 20),
-                const Center(child: CircularProgressIndicator())
-              ]
-            : networkService.transferGroup.entries.map((entry) {
-                Map<String, dynamic> value = entry.value;
-                return Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(
-                          '${value['attributes']?['nickname'] ?? value['host']?.split('.local')?.join('') ?? 'Generic Device'} [${value['address']}]'),
-                      CupertinoButton(
-                        child: const Text('Send'),
-                        onPressed: () => Clipboard.getData('text/plain')
-                            .then((data) => networkService.sendTo(
-                                value['host'], value['port'], data?.text ?? ''))
-                            .catchError((err) => log.e(err)),
-                      )
-                    ]);
-              })),
-      ])),
+    ),
+      children: [
+        ...(
+          loading 
+          ? const [CupertinoActivityIndicator()]
+          : networkService.transferGroup.entries.map((entry) {
+            Map<String, dynamic> value = entry.value;
+            return CupertinoListTile(
+              title: Text(
+                '${value['attributes']?['nickname'] ?? value['host']?.split('.local')?.join('') ?? 'Generic Device'} [${value['address']}]',
+              ),
+              leading: const Icon(CupertinoIcons.wifi, size: 20, color: CupertinoColors.white),
+              onTap: () => Platform.isIOS || Platform.isAndroid == true 
+                ? networkService.sendTo(
+                    value['host'], value['port'],
+                    widget.shareHandlerData
+                  )
+                : Clipboard.getData('text/plain')
+                    .then((data) => networkService.sendTo(
+                        value['host'], value['port'], data?.text ?? ''))
+                    .catchError((err) => log.e(err)),
+            );
+          })),
+      ]
     );
   }
 
