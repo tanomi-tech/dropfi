@@ -9,9 +9,9 @@ import 'package:logger/logger.dart';
 import 'package:network_tools_flutter/network_tools_flutter.dart';
 
 class NetDevices extends StatefulWidget {
-  const NetDevices({super.key, required this.title, this.shareHandlerData});
+  const NetDevices({super.key, required this.title, required this.shareHandlerData});
   final String title;
-  final String? shareHandlerData;
+  final String shareHandlerData;
 
   @override
   State<NetDevices> createState() => _NetDevicesState();
@@ -146,10 +146,12 @@ class _NetDevicesState extends State<NetDevices> {
               title: Text(
                 '${value['attributes']?['nickname'] ?? value['host']?.split('.local')?.join('') ?? 'Generic Device'} [${value['address']}]',
               ),
-              leading: Icon(CupertinoIcons.wifi, size: 20, color: CupertinoColors.white),
-              // trailing: const CupertinoListTileChevron(),
+              leading: const Icon(CupertinoIcons.wifi, size: 20, color: CupertinoColors.white),
               onTap: () => Platform.isIOS || Platform.isAndroid == true 
-                ? widget.shareHandlerData 
+                ? networkService.sendTo(
+                    value['host'], value['port'],
+                    widget.shareHandlerData
+                  )
                 : Clipboard.getData('text/plain')
                     .then((data) => networkService.sendTo(
                         value['host'], value['port'], data?.text ?? ''))
