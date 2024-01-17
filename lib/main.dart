@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:dropfi/services/log_service.dart';
 import 'package:dropfi/services/network_service.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:network_tools_flutter/network_tools_flutter.dart';
 import 'package:path_provider/path_provider.dart';
@@ -107,126 +108,98 @@ class _MyHomePageState extends State<MyHomePage> with LogService {
 
   @override
   Widget build(BuildContext context) {
-    // This method is rerun every time setState is called, for instance as done
-    // by the _incrementCounter method above.
-    //
-    // The Flutter framework has been optimized to make rerunning build methods
-    // fast, so that you can just rebuild anything that needs updating rather
-    // than having to individually change instances of widgets.
-    return CupertinoTabScaffold(
-      tabBar: CupertinoTabBar(
-        items: const <BottomNavigationBarItem>[
-          BottomNavigationBarItem(
-            icon: Icon(CupertinoIcons.home),
-            label: 'Activity',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(CupertinoIcons.search_circle_fill),
-            label: 'Devices',
-          ),
-        ],
-      ),
-      tabBuilder: (BuildContext context, int index) {
-        return CupertinoTabView(
-          builder: (BuildContext context) {
-            return {
-                  0: activityTab(),
-                  1: devicesTab(),
-                }[index] ??
-                Container();
-          },
-        );
-      },
-    );
-  }
-
-  @protected
-  activityTab() {
     SizedBox spacer = const SizedBox(height: 20);
     return CupertinoPageScaffold(
       navigationBar: CupertinoNavigationBar(
         backgroundColor: const Color.fromARGB(255, 90, 11, 129),
-        middle: Text(widget.title,
-            style: GoogleFonts.montserratAlternates(
-                textStyle:
-                    CupertinoTheme.of(context).textTheme.navTitleTextStyle,
-                fontWeight: FontWeight.w800,
-                fontSize: 23)),
+        trailing: const Icon(CupertinoIcons.info_circle_fill, size: 24, color: CupertinoColors.white),
+        leading: Text(
+          widget.title,
+          style: GoogleFonts.montserratAlternates(
+            textStyle: CupertinoTheme.of(context).textTheme.navTitleTextStyle,
+            fontWeight: FontWeight.w800,
+            fontSize: 26
+            )
+          ),
       ),
-      child: Center(
-        // Center is a layout widget. It takes a single child and positions it
-        // in the middle of the parent.
-        child: Column(
-          // Column is also a layout widget. It takes a list of children and
-          // arranges them vertically. By default, it sizes itself to fit its
-          // children horizontally, and tries to be as tall as its parent.
-          //
-          // Column has various properties to control how it sizes itself and
-          // how it positions its children. Here we use mainAxisAlignment to
-          // center the children vertically; the main axis here is the vertical
-          // axis because Columns are vertical (the cross axis would be
-          // horizontal).
-          //
-          // TRY THIS: Invoke "debug painting" (choose the "Toggle Debug Paint"
-          // action in the IDE, or press "p" in the console), to see the
-          // wireframe for each widget.
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            const Text('Instructions',
-                style: TextStyle(decoration: TextDecoration.underline)),
-            spacer,
-            const Text('Open Share > Select DropFi'),
-            spacer,
-            Text(media?.content != null ? 'Copied: ${media?.content}' : ''),
-            CupertinoButton(
-                child: const Text('Send to device'),
-                onPressed: () =>
-                    send(media?.content != null ? '${media?.content}\n' : '\n'))
-          ],
-        ),
-      ),
-    );
-  }
-
-  @protected
-  Widget devicesTab() {
-    return const CupertinoPageScaffold(
-      child: NetDevices(title: 'DropFi  ›  Devices'),
-    );
-  }
-
-  @protected
-  Widget exampleTab(int index) {
-    return CupertinoPageScaffold(
-      navigationBar: CupertinoNavigationBar(
-        middle: Text('Page 1 of tab $index'),
-      ),
-      child: Center(
-        child: CupertinoButton(
-          child: const Text('Next page'),
-          onPressed: () {
-            Navigator.of(context).push(
-              CupertinoPageRoute<void>(
-                builder: (BuildContext context) {
-                  return CupertinoPageScaffold(
-                    navigationBar: CupertinoNavigationBar(
-                      middle: Text('Page 2 of tab $index'),
-                    ),
-                    child: Center(
-                      child: CupertinoButton(
-                        child: const Text('Back'),
-                        onPressed: () {
-                          Navigator.of(context).pop();
-                        },
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                spacer,
+                spacer,
+                const Text(
+                  'Share with devices \non your local network',
+                  style: TextStyle(
+                    fontSize: 28,
+                    fontWeight: FontWeight.w300,
+                    color: CupertinoColors.white
+                  ),
+                ),
+                spacer,
+                const Text(
+                  'Choose a device to share selected content',
+                  style: TextStyle(color: CupertinoColors.systemGrey2)
+                ),
+                spacer,
+                const Divider(color: CupertinoColors.systemGrey2),
+                spacer,
+                const Text(
+                  'Content to Share:',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w300
+                  ),
+                ),
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(12.0),
+                  margin: const EdgeInsets.only(top: 8.0),
+                  decoration: const BoxDecoration(
+                    color: CupertinoColors.darkBackgroundGray,
+                    borderRadius: BorderRadius.all(Radius.circular(10))
+                  ),
+                  child: media?.content == null 
+                  ? const Text(
+                      'Shared content will be populated here', 
+                      textAlign: TextAlign.center, 
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: CupertinoColors.systemGrey2
+                      )
+                    )
+                  : RichText(
+                    textAlign: TextAlign.center,
+                    text: TextSpan(
+                      style: const TextStyle(
+                        color: CupertinoColors.white
                       ),
+                      children: [
+                        WidgetSpan(
+                          child: RegExp('^(https:|http:|www\.)\S*').hasMatch(media?.content as String)
+                          ? const Icon(CupertinoIcons.link, size: 18, color: CupertinoColors.white) 
+                          : const Icon(CupertinoIcons.text_alignleft, size: 18, color: CupertinoColors.white) 
+                        ),
+                        TextSpan(
+                          text: '  ${media?.content}',
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold
+                          )
+                        ),
+                      ],
                     ),
-                  );
-                },
-              ),
-            );
-          },
-        ),
-      ),
+                  )
+                )
+              ]
+            ),
+          ),
+          NetDevices(title: 'Nearby Devices:', shareHandlerData: media?.content != null ? '${media?.content}\n' : ''),
+        ]
+      )
     );
   }
 }
