@@ -33,17 +33,17 @@ dependencies:
 
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
-  bonsoir: ^5.1.1
-  connectivity_plus: ^5.0.2
   cupertino_icons: ^1.0.2
-  device_info_plus: ^9.1.1
-  flutter_webrtc: ^0.9.47
   google_fonts: ^6.1.0
-  logger: ^2.0.2+1
-  network_info_plus: ^4.1.0
   network_tools_flutter: ^1.0.4
-  path_provider: ^2.1.1
-  share_handler: ^0.0.19
+  network_tools: ^4.0.2
+  share_handler: ^0.0.20
+  bonsoir: ^5.1.5
+  logger: ^2.0.2+1
+  device_info_plus: ^9.1.1
+  connectivity_plus: ^5.0.2
+  network_info_plus: ^4.1.0
+  path_provider: ^2.1.2
 
 dev_dependencies:
   flutter_test:
