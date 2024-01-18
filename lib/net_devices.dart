@@ -45,17 +45,17 @@ class _NetDevicesState extends State<NetDevices> {
       networkService.startDiscovery((disc) => (event) {
             // `eventStream` is not null as the discovery instance is "ready" !
             if (event.type == BonsoirDiscoveryEventType.discoveryServiceFound) {
-              log.i(
-                  'Service found: ${event.service?.toJson(prefix: '')['name']}');
+              // log.i(
+              //     'Service found: ${event.service?.toJson(prefix: '')['name']}');
               event.service!.resolve(disc.serviceResolver);
             } else if (event.type ==
                 BonsoirDiscoveryEventType.discoveryServiceResolved) {
               dynamic serviceInfo = event.service?.toJson(prefix: '');
-              log.i('Service resolved: ${serviceInfo['host']}');
-
               if (serviceInfo['attributes']?['ip'] == myDeviceIP) {
                 return;
               }
+              log.i(
+                  'Service resolved: ${serviceInfo['host']} [${serviceInfo['attributes']?['ip'] ?? '<no IP address>'}]');
 
               networkService
                   .addServiceToTransferGroup(event.service!)

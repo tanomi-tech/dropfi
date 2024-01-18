@@ -1,8 +1,8 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+import 'package:dropfi/services/notification_service.dart';
 import 'package:flutter/services.dart';
-import 'package:local_notifier/local_notifier.dart';
 import 'package:bonsoir/bonsoir.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:dropfi/services/log_service.dart';
@@ -14,6 +14,8 @@ typedef BonsoirListenerCallback = void Function(BonsoirDiscoveryEvent) Function(
     BonsoirDiscovery);
 
 class NetworkService with LogService {
+  NotificationService notiService = NotificationService();
+
   static String get mdnsServiceName => '_dropfi._tcp';
 
   Future<ShareHandlerPlatform?> setupShareHandler(cb) async {
@@ -35,16 +37,16 @@ class NetworkService with LogService {
         String senderAddress =
             '${client.remoteAddress.address}:${client.remotePort}';
         log.i('[$senderAddress] $message');
+        log.w(transferGroup);
+        for (String key in transferGroup.keys) {
+          log.w(key);
+          log.w(transferGroup[key]);
+        }
         Clipboard.setData(ClipboardData(text: message)).then((_) {
           String senderDevice = transferGroup[senderAddress]?['attributes']
                   ?['nickname'] ??
               'a device';
-          LocalNotification notification = LocalNotification(
-              title: 'Clipboard Updated',
-              body: senderDevice == 'a device'
-                  ? 'Clipboard updated from $senderDevice on your network'
-                  : 'Clipbard updated from device: $senderDevice');
-          notification.show();
+          notiService.notifyClipboard(senderDevice);
         });
       });
     });
