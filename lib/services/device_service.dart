@@ -2,6 +2,9 @@ import 'dart:io';
 import 'package:device_info_plus/device_info_plus.dart';
 
 class UtilsService {
+  static bool isDesktop =
+      Platform.isLinux || Platform.isMacOS || Platform.isWindows;
+
   static Future<String> getDeviceName() async {
     DeviceInfoPlugin deviceInfo = DeviceInfoPlugin();
     String deviceName = 'Unnamed Device';

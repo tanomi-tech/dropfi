@@ -1,5 +1,8 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+import 'package:flutter/services.dart';
+import 'package:local_notifier/local_notifier.dart';
 import 'package:bonsoir/bonsoir.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:dropfi/services/log_service.dart';
@@ -22,7 +25,33 @@ class NetworkService with LogService {
     return handler;
   }
 
+  Future<void> setupTcpSocketListener(String deviceName) async {
+    final sock = await ServerSocket.bind(InternetAddress.anyIPv4, 54321);
+    log.i('Datagram socket ready to receive on $deviceName\n'
+        '${sock.address.address}:${sock.port}');
+    sock.listen((client) {
+      client.listen((data) async {
+        String message = String.fromCharCodes(data).trim();
+        String senderAddress =
+            '${client.remoteAddress.address}:${client.remotePort}';
+        log.i('[$senderAddress] $message');
+        Clipboard.setData(ClipboardData(text: message)).then((_) {
+          String senderDevice = transferGroup[senderAddress]?['attributes']
+                  ?['nickname'] ??
+              'a device';
+          LocalNotification notification = LocalNotification(
+              title: 'Clipboard Updated',
+              body: senderDevice == 'a device'
+                  ? 'Clipboard updated from $senderDevice on your network'
+                  : 'Clipbard updated from device: $senderDevice');
+          notification.show();
+        });
+      });
+    });
+  }
+
   Future<void> sendTo(String target, int port, String content) async {
+    log.i('[Sending to $target:$port] $content');
     final sock = await Socket.connect(target, port);
     sock.add(utf8.encode('$content\n'));
     sock.close();
