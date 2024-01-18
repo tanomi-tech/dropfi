@@ -1,5 +1,5 @@
 import 'package:bonsoir/bonsoir.dart';
-import 'package:dropfi/services/device_service.dart';
+import 'package:dropfi/services/utils_service.dart';
 import 'package:dropfi/services/network_service.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/services.dart';
