@@ -89,13 +89,13 @@ BEGIN
     BEGIN
         BLOCK "040904e4"
         BEGIN
-            VALUE "CompanyName", "com.example" "\0"
-            VALUE "FileDescription", "dropfi" "\0"
+            VALUE "CompanyName", "com.tanomi" "\0"
+            VALUE "FileDescription", "DropFi" "\0"
             VALUE "FileVersion", VERSION_AS_STRING "\0"
-            VALUE "InternalName", "dropfi" "\0"
-            VALUE "LegalCopyright", "Copyright (C) 2024 com.example. All rights reserved." "\0"
+            VALUE "InternalName", "DropFi" "\0"
+            VALUE "LegalCopyright", "Copyright (C) 2023–2024 Tanomi Technologies LLC. All rights reserved." "\0"
             VALUE "OriginalFilename", "dropfi.exe" "\0"
-            VALUE "ProductName", "dropfi" "\0"
+            VALUE "ProductName", "DropFi" "\0"
             VALUE "ProductVersion", VERSION_AS_STRING "\0"
         END
     END

@@ -5,10 +5,10 @@
 // 'flutter create' template.
 
 // The application's name. By default this is also the title of the Flutter window.
-PRODUCT_NAME = dropfi
+PRODUCT_NAME = DropFi
 
 // The application's bundle identifier
-PRODUCT_BUNDLE_IDENTIFIER = com.example.dropfi
+PRODUCT_BUNDLE_IDENTIFIER = com.tanomi.dropfi
 
 // The copyright displayed in application information
-PRODUCT_COPYRIGHT = Copyright © 2023 com.example. All rights reserved.
+PRODUCT_COPYRIGHT = Copyright © 2023–2024 Tanomi Technologies LLC. All rights reserved.
