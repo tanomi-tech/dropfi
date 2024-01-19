@@ -1,10 +1,11 @@
-import 'dart:convert';
 import 'dart:io';
+import 'package:dropfi/services/utils_service.dart';
 import 'package:dropfi/services/log_service.dart';
 import 'package:dropfi/services/network_service.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:local_notifier/local_notifier.dart';
 import 'package:network_tools_flutter/network_tools_flutter.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_handler/share_handler.dart';
@@ -16,6 +17,11 @@ void main() async {
   // It's necessary to pass correct path to be able to use this library.
   final appDocDirectory = await getApplicationDocumentsDirectory();
   await configureNetworkTools(appDocDirectory.path, enableDebugging: false);
+  if (UtilsService.isDesktop) {
+    await localNotifier.setup(
+      appName: 'DropFi',
+    );
+  }
   runApp(const DropFi());
 }
 
@@ -71,19 +77,15 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> with LogService {
   SharedMedia? media;
 
+  final networkService = NetworkService();
+
   @override
   void initState() {
     super.initState();
     initPlatformState();
+    UtilsService.getDeviceName().then(
+        (deviceName) => networkService.setupTcpSocketListener(deviceName));
   }
-
-  send(String content) async {
-    final sock = await Socket.connect(InternetAddress.anyIPv4, 54321);
-    sock.add(utf8.encode(content));
-    sock.close();
-  }
-
-  final networkService = NetworkService();
 
   // Platform messages are asynchronous, so we initialize in an async method.
   Future<void> initPlatformState() async {
@@ -110,96 +112,82 @@ class _MyHomePageState extends State<MyHomePage> with LogService {
   Widget build(BuildContext context) {
     SizedBox spacer = const SizedBox(height: 20);
     return CupertinoPageScaffold(
-      navigationBar: CupertinoNavigationBar(
-        backgroundColor: const Color.fromARGB(255, 90, 11, 129),
-        trailing: const Icon(CupertinoIcons.info_circle_fill, size: 24, color: CupertinoColors.white),
-        leading: Text(
-          widget.title,
-          style: GoogleFonts.montserratAlternates(
-            textStyle: CupertinoTheme.of(context).textTheme.navTitleTextStyle,
-            fontWeight: FontWeight.w800,
-            fontSize: 26
-            )
-          ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
+        navigationBar: CupertinoNavigationBar(
+          backgroundColor: const Color.fromARGB(255, 90, 11, 129),
+          trailing: const Icon(CupertinoIcons.info_circle_fill,
+              size: 24, color: CupertinoColors.white),
+          leading: Text(widget.title,
+              style: GoogleFonts.montserratAlternates(
+                  textStyle:
+                      CupertinoTheme.of(context).textTheme.navTitleTextStyle,
+                  fontWeight: FontWeight.w800,
+                  fontSize: 26)),
+        ),
+        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                spacer,
-                spacer,
-                const Text(
-                  'Share with devices \non your local network',
-                  style: TextStyle(
+            child:
+                Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              spacer,
+              spacer,
+              const Text(
+                'Share with devices \non your local network',
+                style: TextStyle(
                     fontSize: 28,
                     fontWeight: FontWeight.w300,
-                    color: CupertinoColors.white
-                  ),
-                ),
-                spacer,
-                const Text(
-                  'Choose a device to share selected content',
-                  style: TextStyle(color: CupertinoColors.systemGrey2)
-                ),
-                spacer,
-                const Divider(color: CupertinoColors.systemGrey2),
-                spacer,
-                const Text(
-                  'Content to Share:',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w300
-                  ),
-                ),
-                Container(
+                    color: CupertinoColors.white),
+              ),
+              spacer,
+              const Text('Choose a device to share selected content',
+                  style: TextStyle(color: CupertinoColors.systemGrey2)),
+              spacer,
+              const Divider(color: CupertinoColors.systemGrey2),
+              spacer,
+              const Text(
+                'Content to Share:',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w300),
+              ),
+              Container(
                   width: double.infinity,
                   padding: const EdgeInsets.all(12.0),
                   margin: const EdgeInsets.only(top: 8.0),
                   decoration: const BoxDecoration(
-                    color: CupertinoColors.darkBackgroundGray,
-                    borderRadius: BorderRadius.all(Radius.circular(10))
-                  ),
-                  child: media?.content == null 
-                  ? const Text(
-                      'Shared content will be populated here', 
-                      textAlign: TextAlign.center, 
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: CupertinoColors.systemGrey2
-                      )
-                    )
-                  : RichText(
-                    textAlign: TextAlign.center,
-                    text: TextSpan(
-                      style: const TextStyle(
-                        color: CupertinoColors.white
-                      ),
-                      children: [
-                        WidgetSpan(
-                          child: RegExp('^(https:|http:|www\.)\S*').hasMatch(media?.content as String)
-                          ? const Icon(CupertinoIcons.link, size: 18, color: CupertinoColors.white) 
-                          : const Icon(CupertinoIcons.text_alignleft, size: 18, color: CupertinoColors.white) 
-                        ),
-                        TextSpan(
-                          text: '  ${media?.content}',
-                          style: const TextStyle(
-                            fontWeight: FontWeight.bold
-                          )
-                        ),
-                      ],
-                    ),
-                  )
-                )
-              ]
-            ),
+                      color: CupertinoColors.darkBackgroundGray,
+                      borderRadius: BorderRadius.all(Radius.circular(10))),
+                  child: media?.content == null
+                      ? const Text('Shared content will be populated here',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                              fontSize: 14, color: CupertinoColors.systemGrey2))
+                      : RichText(
+                          textAlign: TextAlign.center,
+                          text: TextSpan(
+                            style:
+                                const TextStyle(color: CupertinoColors.white),
+                            children: [
+                              WidgetSpan(
+                                  child: RegExp('^(https:|http:|www\.)\S*')
+                                          .hasMatch(media?.content as String)
+                                      ? const Icon(CupertinoIcons.link,
+                                          size: 18,
+                                          color: CupertinoColors.white)
+                                      : const Icon(
+                                          CupertinoIcons.text_alignleft,
+                                          size: 18,
+                                          color: CupertinoColors.white)),
+                              TextSpan(
+                                  text: '  ${media?.content}',
+                                  style: const TextStyle(
+                                      fontWeight: FontWeight.bold)),
+                            ],
+                          ),
+                        ))
+            ]),
           ),
-          NetDevices(title: 'Nearby Devices:', shareHandlerData: media?.content != null ? '${media?.content}\n' : ''),
-        ]
-      )
-    );
+          NetDevices(
+              title: 'Nearby Devices:',
+              shareHandlerData:
+                  media?.content != null ? '${media?.content}\n' : ''),
+        ]));
   }
 }

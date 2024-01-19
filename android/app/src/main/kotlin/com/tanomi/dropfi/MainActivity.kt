@@ -1,4 +1,4 @@
-package com.example.dropfi
+package com.tanomi.dropfi
 
 import io.flutter.embedding.android.FlutterActivity
 
