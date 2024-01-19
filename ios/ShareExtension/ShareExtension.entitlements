@@ -4,7 +4,7 @@
 <dict>
 	<key>com.apple.security.application-groups</key>
 	<array>
-		<string>group.com.dropfi</string>
+		<string>group.tanomi.dropfi</string>
 	</array>
 </dict>
 </plist>

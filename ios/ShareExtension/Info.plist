@@ -3,7 +3,7 @@
 <plist version="1.0">
 <dict>
     <key>AppGroupId</key>
-    <string>group.com.dropfi</string>
+    <string>group.tanomi.dropfi</string>
 	<key>NSExtension</key>
 	<dict>
 		<key>NSExtensionAttributes</key>
