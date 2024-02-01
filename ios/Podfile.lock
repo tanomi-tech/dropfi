@@ -73,7 +73,7 @@ SPEC CHECKSUMS:
   flutter_icmp_ping: 2b159955eee0c487c766ad83fec224ae35e7c935
   flutter_isolate: 0edf5081826d071adf21759d1eb10ff5c24503b5
   network_info_plus: 6d0c3eb8367b8164fa3fb0c19875e3f59d49697f
-  path_provider_foundation: 29f094ae23ebbca9d3d0cec13889cd9060c0e943
+  path_provider_foundation: 3784922295ac71e43754bd15e0653ccfd36a147c
   ReachabilitySwift: 985039c6f7b23a1da463388634119492ff86c825
   share_handler_ios: 83934899a7ad80e435607a0302a7e5b257f8e2f9
   share_handler_ios_models: fc638c9b4330dc7f082586c92aee9dfa0b87b871
