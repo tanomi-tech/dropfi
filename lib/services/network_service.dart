@@ -112,12 +112,12 @@ class NetworkService with LogService {
   Future<void> addServiceToTransferGroup(BonsoirService bonsoirService) async {
     dynamic target = bonsoirService.toJson(prefix: '');
     target['address'] = "${target['host']}:${target['port']}";
-    if (target['host'] == null || target['port'] is! int) {
+    if (target['attributes']?['ip'] == null || target['port'] is! int) {
       log.e(
           'Could not add target to transfer group. No hostname and/or port provided.');
       return;
     }
-    transferGroup[target['host']] = target;
+    transferGroup[target['attributes']?['ip']] = target;
   }
 
   void dispose() {

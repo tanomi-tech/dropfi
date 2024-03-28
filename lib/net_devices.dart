@@ -96,11 +96,13 @@ class _NetDevicesState extends State<NetDevices> {
                     leading: const Icon(CupertinoIcons.wifi,
                         size: 20, color: CupertinoColors.white),
                     onTap: () => !UtilsService.isDesktop
-                        ? networkService.sendTo(value['host'], value['port'],
-                            widget.shareHandlerData)
+                        ? networkService.sendTo(value['attributes']?['ip'],
+                            value['port'], widget.shareHandlerData)
                         : Clipboard.getData('text/plain')
                             .then((data) => networkService.sendTo(
-                                value['host'], value['port'], data?.text ?? ''))
+                                value['attributes']?['ip'],
+                                value['port'],
+                                data?.text ?? ''))
                             .catchError((err) => log.e(err)),
                   );
                 })),
