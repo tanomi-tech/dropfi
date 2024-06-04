@@ -4,12 +4,12 @@ import 'package:dropfi/services/log_service.dart';
 import 'package:dropfi/services/network_service.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:local_notifier/local_notifier.dart';
 import 'package:network_tools_flutter/network_tools_flutter.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_handler/share_handler.dart';
-
 import 'net_devices.dart';
 
 void main() async {
@@ -74,10 +74,26 @@ class MyHomePage extends StatefulWidget {
   State<MyHomePage> createState() => _MyHomePageState();
 }
 
-class _MyHomePageState extends State<MyHomePage> with LogService {
+class _MyHomePageState extends State<MyHomePage>
+    with LogService, WidgetsBindingObserver {
   SharedMedia? media;
 
   final networkService = NetworkService();
+
+  void _setShareMediaFromClipboard() async {
+    ClipboardData? data = await Clipboard.getData('text/plain');
+    setState(() {
+      media = SharedMedia(content: data?.text);
+    });
+  }
+
+  AppLifecycleState? _notification;
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      _setShareMediaFromClipboard();
+    }
+  }
 
   @override
   void initState() {
@@ -85,6 +101,12 @@ class _MyHomePageState extends State<MyHomePage> with LogService {
     initPlatformState();
     UtilsService.getDeviceName().then(
         (deviceName) => networkService.setupTcpSocketListener(deviceName));
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
   }
 
   // Platform messages are asynchronous, so we initialize in an async method.
@@ -104,6 +126,7 @@ class _MyHomePageState extends State<MyHomePage> with LogService {
     }
 
     setState(() {
+      _setShareMediaFromClipboard();
       // _platformVersion = platformVersion;
     });
   }
